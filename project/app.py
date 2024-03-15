@@ -67,6 +67,28 @@ def add_livestock():
 def index():
     return render_template('index.html')
 
+@app.route('/harvest_chart')
+def harvest_chart():
+    harvests = Harvest.query.all()  
+
+    dates = [harvest.date.strftime('%m-%d') for harvest in harvests]  
+    quantities = [harvest.quantity for harvest in harvests]
+
+    plt.plot(dates, quantities, marker='o')
+    plt.gcf().autofmt_xdate()  
+    plt.xticks(rotation=45, ha="right")  
+
+    plt.xlabel('Erntedatum')
+    plt.ylabel('Erntemenge (kg)')
+    plt.title('Zeitlicher Ernteertrag')
+
+    img = BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    graph_url = base64.b64encode(img.getvalue()).decode()
+
+    return jsonify({'graph_url': graph_url})
+
 @app.route('/vehicles')
 def vehicles():
     return render_template('vehicles.html', vehicles=Vehicle.query.all())
