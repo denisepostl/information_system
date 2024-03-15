@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Fahrzeuge</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('livestock') }}">Tierbestand</a>
+        <a href="{{ url_for('feedstock') }}">Futterbestand</a>
+        <a href="{{ url_for('lands') }}">Flächen</a>
+        <a href="{{ url_for('harvest') }}">Ernteertrag</a>
+    </nav>
+
+    <main>
+        <form method="get" action="{{ url_for('vehicles') }}" onsubmit="return searchVehicles()">
+            <label for="search">Suche nach Fahrzeugen:</label>
+            <input type="text" id="search" name="search" placeholder="Marke oder Modell eingeben">
+            <button type="submit">Suchen</button>
+        </form>
+        <div id="searchResults" style="display: none;">
+            <button class="close-btn-form" onclick="closeSearchResults()">X</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Marke</th>
+                        <th>Modell</th>
+                        <th>Jahr</th>
+                    </tr>
+                </thead>
+                <tbody id="searchList"></tbody>
+            </table>
+        </div>
+        
+
+        <div class="btn-container">
+            <button onclick="showAddForm()">Fahrzeug hinzufügen</button>
+            <button onclick="showList()">Fahrzeug anzeigen</button>
+        </div>
+
+        <div id="addForm" style="display: none;">
+            <h2>Fahrzeug hinzufügen <button class="close-btn-form" onclick="closeForm('addForm')">X</button></h2>
+            <form method="post" action="{{ url_for('add_vehicle') }}" enctype="multipart/form-data">
+                <label for="brand">Marke:</label>
+                <input type="text" id="brand" name="brand" required>
+                <label for="model">Modell:</label>
+                <input type="text" id="model" name="model" required>
+                <label for="year">Jahr:</label>
+                <input type="number" id="year" name="year" required>
+                <label for="image">Bild hochladen:</label>
+                <input type="file" id="image" name="image">
+                <button type="submit">Fahrzeug hinzufügen</button>
+            </form>
+        </div>
+
+        <div id="editForm" style="display: none;">
+            <h2>Fahrzeug bearbeiten <button class="close-btn-form" onclick="closeEditForm()">X</button></h2>
+            <form method="post" action="{{ url_for('edit_vehicle') }}" enctype="multipart/form-data">
+                <input type="hidden" id="editId" name="editId">
+                <label for="editBrand">Marke:</label>
+                <input type="text" id="editBrand" name="editBrand" required>
+                <label for="editModel">Modell:</label>
+                <input type="text" id="editModel" name="editModel" required>
+                <label for="editYear">Jahr:</label>
+                <input type="number" id="editYear" name="editYear" required>
+                <label for="editImage">Bild ändern:</label>
+                <input type="file" id="editImage" name="editImage">
+                <button type="submit">Fahrzeug aktualisieren</button>
+            </form>
+        </div>
+
+        <div id="vehicleList" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Marke</th>
+                        <th>Modell</th>
+                        <th>Jahr</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="list">
+                    {% for vehicle in vehicles %}
+                        <tr>
+                            <td><img src="{{ url_for('static', filename=vehicle.image_path) }}" alt="Vehicle Image" width="50"> </td>
+                            <td>{{ vehicle.brand }}</td>
+                            <td>{{ vehicle.model }}</td>
+                            <td>{{ vehicle.year }}</td>
+                            <td>
+                                <button onclick="deleteVehicle('{{ vehicle.id }}')">Löschen</button>
+                                <button onclick="showEditForm('{{ vehicle.id }}', '{{ vehicle.brand }}', '{{ vehicle.model }}', '{{ vehicle.year }}')">Edit</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Landwirtschafts-Informationssystem</p>
+    </footer>
+
+    <script>
+        function searchVehicles() {
+            const searchQuery = document.getElementById('search').value;
+        
+            if (searchQuery.trim() === '') {
+                return false;
+            }
+        
+            const staticPath = "{{ url_for('static', filename='') }}";  
+        
+            fetch(`/search_vehicles?search=${encodeURIComponent(searchQuery)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const searchList = document.getElementById('searchList');
+                    searchList.innerHTML = '';
+        
+                    if (data.length === 0) {
+                        searchList.innerHTML = '<tr><td colspan="4">Keine Fahrzeuge gefunden.</td></tr>';
+                    } else {
+                        data.forEach(vehicle => {
+                            const row = searchList.insertRow();
+                            const imageCell = row.insertCell(0);
+                            const brandCell = row.insertCell(1);
+                            const modelCell = row.insertCell(2);
+                            const yearCell = row.insertCell(3);
+        
+                            brandCell.textContent = vehicle.brand;
+                            modelCell.textContent = vehicle.model;
+                            yearCell.textContent = vehicle.year;
+        
+                            const image = document.createElement('img');
+                            image.src = staticPath + vehicle.image_path;  
+                            image.alt = 'Vehicle Image';
+                            image.width = 50;
+        
+                            imageCell.appendChild(image);
+                        });
+                    }
+        
+                    document.getElementById('vehicleList').style.display = 'none';
+                    document.getElementById('searchResults').style.display = 'block';
+                })
+                .catch(error => console.error('Fehler beim Suchen der Fahrzeuge:', error));
+        
+            return false;
+        }
+        
+
+        function closeSearchResults() {
+            document.getElementById('searchResults').style.display = 'none';
+        }
+
+        function showEditForm(id, brand, model, year) {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('vehicleList').style.display = 'none';
+
+            const editForm = document.getElementById('editForm');
+            editForm.style.display = 'block';
+
+            document.getElementById('editBrand').value = brand;
+            document.getElementById('editModel').value = model;
+            document.getElementById('editYear').value = year;
+            document.getElementById('editId').value = id;
+        }
+        
+
+        function closeEditForm() {
+            document.getElementById('editForm').style.display = 'none';
+            showList(); 
+        }
+
+        function closeForm(formId) {
+            document.getElementById(formId).style.display = 'none';
+        }
+
+        function deleteVehicle(id) {
+            fetch(`/delete_vehicle?id=${id}`, {
+                method: 'GET',
+            })
+            .then(response => {
+                if (response.ok) {
+                    const tableBody = document.getElementById('list');
+                    const rows = tableBody.getElementsByTagName('tr');
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const cells = rows[i].getElementsByTagName('td');
+                        if (cells[0].textContent === id) {
+                            tableBody.deleteRow(i);
+                            break;
+                        }
+                    }
+
+                    location.reload();
+                } else {
+                    console.error('Fehler beim Löschen des Fahrzeugs:', response.statusText);
+                }
+            })
+            .catch(error => console.error('Fehler beim Löschen des Fahrzeugs:', error));
+        }
+
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('vehicleList').style.display = 'none';
+            document.getElementById('updateForm').style.display = 'none';
+        }
+
+        function showList() {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('vehicleList').style.display = 'block';
+            document.getElementById('updateForm').style.display = 'none';
+
+            fetch('/getvehicles')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('list');
+                    tableBody.innerHTML = '';
+
+                    data.forEach(vehicle => {
+                        const row = tableBody.insertRow();
+                        const brandCell = row.insertCell(0);
+                        const modelCell = row.insertCell(1);
+                        const yearCell = row.insertCell(2);
+                        const actionsCell = row.insertCell(3);
+
+                        brandCell.textContent = vehicle.brand;
+                        modelCell.textContent = vehicle.model;
+                        yearCell.textContent = vehicle.year;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Löschen';
+                        deleteButton.onclick = function () {
+                            deleteVehicle(vehicle.id);
+                        };
+
+                        actionsCell.appendChild(deleteButton);
+                    });
+                })
+                .catch(error => console.error('Fehler beim Abrufen der Fahrzeuge:', error));
+        }
+    </script>
+</body>
+</html>

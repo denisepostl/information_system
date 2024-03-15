@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Flächen</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('livestock') }}">Tierbestand</a>
+        <a href="{{ url_for('feedstock') }}">Futterbestand</a>
+        <a href="{{ url_for('vehicles') }}">Fahrzeuge</a>
+        <a href="{{ url_for('harvest') }}">Ernteertrag</a>
+    </nav>
+
+    <main>
+        <div class="btn-container">
+            <button onclick="showAddForm()">Fläche hinzufügen</button>
+            <button onclick="showList()">Flächen anzeigen</button>
+        </div>
+
+        <div id="addForm" style="display: none;">
+            <h2>Fläche hinzufügen <button class="close-btn-form" onclick="closeForm('addForm')">X</button></h2>
+            <form method="post" action="{{ url_for('add_land') }}">
+                <label for="type">Typ:</label>
+                <input type="text" id="type" name="type" required>
+                <label for="size">Größe:</label>
+                <input type="text" id="size" name="size" required>
+                <label for="ownership">Besitz:</label>
+                <select id="ownership" name="ownership" onchange="toggleOwnershipFields()">
+                    <option value="eigenbesitz">Eigenbesitz</option>
+                    <option value="gepachtet">Gepachtet</option>
+                </select>
+
+                <div id="ownershipFields" style="display: none;">
+                    <label for="firstName">Vorname:</label>
+                    <input type="text" id="firstName" name="firstName">
+                    <label for="lastName">Nachname:</label>
+                    <input type="text" id="lastName" name="lastName">
+                    <label for="phoneNumber">Telefonnummer:</label>
+                    <input type="text" id="phoneNumber" name="phoneNumber">
+                    <label for="addressStreet">Straße:</label>
+                    <input type="text" id="addressStreet" name="addressStreet">
+                    <label for="addressCity">Stadt:</label>
+                    <input type="text" id="addressCity" name="addressCity">
+                    <label for="addressState">Bundesland:</label>
+                    <input type="text" id="addressState" name="addressState">
+                    <label for="addressZipCode">PLZ:</label>
+                    <input type="text" id="addressZipCode" name="addressZipCode">
+                </div>
+
+                <button type="submit">Fläche hinzufügen</button>
+            </form>
+        </div>
+
+        <div id="editForm" style="display: none;">
+            <h2>Fläche bearbeiten <button class="close-btn-form" onclick="closeEditForm()">X</button></h2>
+            <form method="post" action="{{ url_for('edit_land') }}">
+                <input type="hidden" id="editId" name="editId">
+                <label for="editType">Typ:</label>
+                <input type="text" id="editType" name="editType" required>
+                <label for="editSize">Größe:</label>
+                <input type="text" id="editSize" name="editSize" required>
+                <label for="editOwnership">Besitz:</label>
+                <select id="editOwnership" name="editOwnership" onchange="toggleEditOwnershipFields()">
+                    <option value="eigenbesitz">Eigenbesitz</option>
+                    <option value="gepachtet">Gepachtet</option>
+                </select>
+
+                <div id="editOwnershipFields" style="display: none;">
+                    <label for="editFirstName">Vorname:</label>
+                    <input type="text" id="editFirstName" name="editFirstName">
+                    <label for="editLastName">Nachname:</label>
+                    <input type="text" id="editLastName" name="editLastName">
+                    <label for="editPhoneNumber">Telefonnummer:</label>
+                    <input type="text" id="editPhoneNumber" name="editPhoneNumber">
+                    <label for="editAddressStreet">Straße:</label>
+                    <input type="text" id="editAddressStreet" name="editAddressStreet">
+                    <label for="editAddressCity">Stadt:</label>
+                    <input type="text" id="editAddressCity" name="editAddressCity">
+                    <label for="editAddressState">Bundesland:</label>
+                    <input type="text" id="editAddressState" name="editAddressState">
+                    <label for="editAddressZipCode">PLZ:</label>
+                    <input type="text" id="editAddressZipCode" name="editAddressZipCode">
+                </div>
+
+                <button type="submit">Fläche aktualisieren</button>
+            </form>
+        </div>
+
+        <div id="landList" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Typ</th>
+                        <th>Größe</th>
+                        <th>Besitz</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="list">
+                    {% for land in lands %}
+                        <tr>
+                            <td>{{ land.type }}</td>
+                            <td>{{ land.size }}</td>
+                            <td>{{ land.ownership }}</td>
+                            <td>
+                                <button onclick="deleteLand('{{ land.id }}')">Löschen</button>
+                                <button onclick="showEditForm('{{ land.id }}', '{{ land.type }}', '{{ land.size }}', '{{ land.ownership }}')">Edit</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Landwirtschafts-Informationssystem</p>
+    </footer>
+
+    <script>
+        function showEditForm(id, type, size, ownership) {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('landList').style.display = 'none';
+
+            const editForm = document.getElementById('editForm');
+            editForm.style.display = 'block';
+
+            document.getElementById('editType').value = type;
+            document.getElementById('editSize').value = size;
+            document.getElementById('editOwnership').value = ownership;
+            document.getElementById('editId').value = id;
+
+            toggleEditOwnershipFields();
+        }
+
+        function deleteLand(id) {
+            fetch(`/delete_land?id=${id}`, {
+                method: 'GET',
+            })
+            .then(response => {
+                if (response.ok) {
+                    const tableBody = document.getElementById('list');
+                    const rows = tableBody.getElementsByTagName('tr');
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const cells = rows[i].getElementsByTagName('td');
+                        if (cells[0].textContent === id) {
+                            tableBody.deleteRow(i);
+                            break;
+                        }
+                    }
+
+                    location.reload();
+                } else {
+                    console.error('Fehler beim Löschen der Fläche:', response.statusText);
+                }
+            })
+            .catch(error => console.error('Fehler beim Löschen der Fläche:', error));
+        }
+
+        function closeEditForm() {
+            document.getElementById('editForm').style.display = 'none';
+            showList(); 
+        }
+
+        function closeForm(formId) {
+            document.getElementById(formId).style.display = 'none';
+        }
+
+    
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('landList').style.display = 'none';
+            document.getElementById('updateForm').style.display = 'none';
+
+            toggleOwnershipFields();
+        }
+
+        function showList() {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('landList').style.display = 'block';
+            document.getElementById('updateForm').style.display = 'none';
+        
+            fetch('/getlands')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('list');
+                    tableBody.innerHTML = '';
+        
+                    data.forEach(land => {
+                        const row = tableBody.insertRow();
+                        const typeCell = row.insertCell(0);
+                        const sizeCell = row.insertCell(1);
+                        const ownershipCell = row.insertCell(2);
+                        const actionsCell = row.insertCell(3);
+        
+                        typeCell.textContent = land.type;
+                        sizeCell.textContent = land.size;
+                        ownershipCell.textContent = land.ownership;
+        
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Löschen';
+                        deleteButton.onclick = function () {
+                            deleteLand(land.id);
+                        };
+        
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Edit';
+                        editButton.onclick = function () {
+                            showEditForm(land.id, land.type, land.size, land.ownership);
+                        };
+        
+                        actionsCell.appendChild(deleteButton);
+                        actionsCell.appendChild(editButton);
+                    });
+                })
+                .catch(error => console.error('Fehler beim Abrufen der Flächen:', error));
+        }
+        
+
+        function toggleOwnershipFields() {
+            const ownership = document.getElementById('ownership').value;
+            const ownershipFields = document.getElementById('ownershipFields');
+
+            if (ownership === 'gepachtet') {
+                ownershipFields.style.display = 'block';
+            } else {
+                ownershipFields.style.display = 'none';
+            }
+        }
+
+        function toggleEditOwnershipFields() {
+            const ownership = document.getElementById('editOwnership').value;
+            const ownershipFields = document.getElementById('editOwnershipFields');
+
+            if (ownership === 'gepachtet') {
+                ownershipFields.style.display = 'block';
+            } else {
+                ownershipFields.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

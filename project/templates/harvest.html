@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1;
+        }
+
+        #harvestChart {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        #chartImage {
+            position: relative;
+        }
+
+        .close-btn-chart {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: white;
+            font-size: 20px;
+            background-color: transparent;
+            border: none;
+            outline: none;
+            padding: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .close-btn-chart:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Ernteertrag</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('livestock') }}">Tierbestand</a>
+        <a href="{{ url_for('feedstock') }}">Futterbestand</a>
+        <a href="{{ url_for('vehicles') }}">Fahrzeuge</a>
+        <a href="{{ url_for('lands') }}">Flächen</a>
+    </nav>
+
+    <main>
+        <div class="btn-container">
+            <button onclick="showAddForm()">Ernte hinzufügen</button>
+            <button onclick="showList()">Ernte anzeigen</button>
+        </div>
+
+        <div id="addForm" style="display: none;">
+            <h2>Ernte hinzufügen <button class="close-btn-form" onclick="closeForm('addForm')">X</button></h2>
+            <form method="post" action="{{ url_for('add_harvest') }}">
+                <label for="crop">Ernte:</label>
+                <input type="text" id="crop" name="crop" required>
+                <label for="quantity">Menge:</label>
+                <input type="number" id="quantity" name="quantity" required>
+                <label for="unit">Einheit:</label>
+                <select id="unit" name="unit" required>
+                    <option value="kg">kg</option>
+                </select>
+                <label for="date">Erntedatum:</label>
+                <input type="date" id="date" name="date" required>
+                <label for="land_id">Fläche:</label>
+                <select id="land_id" name="land_id" required>
+                    {% for land in lands %}
+                        <option value="{{ land.id }}">{{ land.type }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Ernte hinzufügen</button>
+            </form>
+        </div>
+
+        <div id="editForm" style="display: none;">
+            <h2>Ernte bearbeiten <button class="close-btn-form" onclick="closeEditForm()">X</button></h2>
+            <form method="post" action="{{ url_for('edit_harvest') }}">
+                <input type="hidden" id="editId" name="editId">
+                <label for="editCrop">Crop:</label>
+                <input type="text" id="editCrop" name="editCrop" required>
+                <label for="editQuantity">Quantity:</label>
+                <input type="number" id="editQuantity" name="editQuantity" required>
+                <label for="editUnit">Unit:</label>
+                <select id="editUnit" name="editUnit" required>
+                    <option value="kg">kg</option>
+                </select>
+                <label for="editDate">Date:</label>
+                <input type="date" id="editDate" name="editDate" required>
+                <label for="editLandId">Land:</label>
+                <select id="editLandId" name="editLandId" required>
+                    {% for land in lands %}
+                        <option value="{{ land.id }}">{{ land.type }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Ernte aktualisieren</button>
+            </form>
+        </div>
+
+
+        <div id="harvestList" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Crop</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Date</th>
+                        <th>Land</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="harvestTable">
+                    {% for harvest in harvests %}
+                        <tr>
+                            <td>{{ harvest.crop }}</td>
+                            <td>{{ harvest.quantity }}</td>
+                            <td>{{ harvest.unit }}</td>
+                            <td>{{ harvest.date }}</td>
+                            <td>{{ harvest.land.type }}</td>
+                            <td>
+                                <button onclick="deleteHarvest('{{ harvest.id }}')">Löschen</button>
+                                <button onclick="showEditForm('{{ harvest.id }}', '{{ harvest.crop }}', '{{ harvest.quantity }}', '{{ harvest.unit }}', '{{ harvest.date }}', '{{ harvest.land.id }}')">Edit</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Landwirtschafts-Informationssystem</p>
+    </footer>
+
+    <script>
+        function showHarvestChart() {
+            const overlay = document.getElementById('overlay');
+            const harvestChart = document.getElementById('harvestChart');
+            const chartImage = document.getElementById('chartImageSrc');
+
+            fetch('/harvest_chart')
+                .then(response => response.json())
+                .then(data => {
+                    chartImage.src = "data:image/png;base64," + data.graph_url;
+                    overlay.style.display = 'block';
+                    harvestChart.style.display = 'block';
+                })
+                .catch(error => console.error('Fehler beim Laden des Ernteertrag-Charts:', error));
+        }
+
+        function closeHarvestChart() {
+            const overlay = document.getElementById('overlay');
+            const harvestChart = document.getElementById('harvestChart');
+            overlay.style.display = 'none';
+            harvestChart.style.display = 'none';
+        }
+
+
+        function showEditForm(id, crop, quantity, unit, date, landId) {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('harvestList').style.display = 'none';
+
+            const editForm = document.getElementById('editForm');
+            editForm.style.display = 'block';
+
+            document.getElementById('editCrop').value = crop;
+            document.getElementById('editQuantity').value = quantity;
+            document.getElementById('editUnit').value = unit;
+            document.getElementById('editDate').value = date;
+            document.getElementById('editLandId').value = landId;
+            document.getElementById('editId').value = id;
+        }
+
+        function closeEditForm() {
+            document.getElementById('editForm').style.display = 'none';
+            showList(); 
+        }
+
+        function closeForm(formId) {
+            document.getElementById(formId).style.display = 'none';
+        }
+
+        function deleteHarvest(id) {
+            fetch(`/delete_harvest?id=${id}`, {
+                method: 'GET',
+            })
+            .then(response => {
+                if (response.ok) {
+                    const tableBody = document.getElementById('harvestTable');
+                    const rows = tableBody.getElementsByTagName('tr');
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const cells = rows[i].getElementsByTagName('td');
+                        if (cells[0].textContent === id) {
+                            tableBody.deleteRow(i);
+                            break;
+                        }
+                    }
+
+                    location.reload();
+                } else {
+                    console.error('Fehler beim Löschen der Ernte:', response.statusText);
+                }
+            })
+            .catch(error => console.error('Fehler beim Löschen der Ernte:', error));
+        }
+
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('harvestList').style.display = 'none';
+            document.getElementById('updateForm').style.display = 'none';
+        }
+
+        function showList() {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('harvestList').style.display = 'block';
+            document.getElementById('updateForm').style.display = 'none';
+
+            fetch('/getharvests')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('harvestTable');
+                    tableBody.innerHTML = '';
+
+                    data.forEach(harvest => {
+                        const row = tableBody.insertRow();
+                        const cropCell = row.insertCell(0);
+                        const quantityCell = row.insertCell(1);
+                        const unitCell = row.insertCell(2);
+                        const dateCell = row.insertCell(3);
+                        const landCell = row.insertCell(4);
+                        const actionsCell = row.insertCell(5);
+
+                        cropCell.textContent = harvest.crop;
+                        quantityCell.textContent = harvest.quantity;
+                        unitCell.textContent = harvest.unit;
+                        dateCell.textContent = harvest.date;
+                        landCell.textContent = harvest.land;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Löschen';
+                        deleteButton.onclick = function () {
+                            deleteHarvest(harvest.id);
+                        };
+
+                        actionsCell.appendChild(deleteButton);
+                    });
+                })
+                .catch(error => console.error('Fehler beim Abrufen der Ernten:', error));
+        }
+    </script>
+</body>
+</html>

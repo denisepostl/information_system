@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  postgres-db:
+    image: postgres:13  
+    environment:
+      POSTGRES_DB: farming_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  farming_proj_2024:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres-db
+    volumes:
+      - "./static:/app/static"  

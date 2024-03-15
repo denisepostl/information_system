@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Futterbestand</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('livestock') }}">Tierbestand</a>
+        <a href="{{ url_for('vehicles') }}">Fahrzeuge</a>
+        <a href="{{ url_for('lands') }}">Flächen</a>
+        <a href="{{ url_for('harvest') }}">Ernteertrag</a>
+    </nav>
+
+    <main>
+        <form method="get" action="{{ url_for('search_feedstock') }}" onsubmit="return searchFeedstock()">
+            <label for="search">Suche nach Futter:</label>
+            <input type="text" id="search" name="search" placeholder="Kategorie eingeben">
+            <button type="submit">Suchen</button>
+        </form>
+        <div id="searchResults" style="display: none;">
+            <button class="close-btn-form" onclick="closeSearchResults()">X</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kategorie</th>
+                        <th>Menge</th>
+                        <th>Einheit</th>
+                    </tr>
+                </thead>
+                <tbody id="searchList"></tbody>
+            </table>
+        </div>
+
+        <div class="btn-container">
+            <button onclick="showAddForm()">Futter hinzufügen</button>
+            <button onclick="showList()">Futter anzeigen</button>
+        </div>
+
+        <div id="addForm" style="display: none;">
+            <h2>Futter hinzufügen <button class="close-btn-form" onclick="closeForm('addForm')">X</button></h2>
+            <form method="post" action="{{ url_for('add_feedstock') }}">
+                <label for="category">Kategorie:</label>
+                <input type="text" id="category" name="category" required>
+                <label for="quantity">Menge:</label>
+                <input type="number" id="quantity" name="quantity" required>
+                <label for="unit">Einheit:</label>
+                <input type="text" id="unit" name="unit" required>
+                <button type="submit">Futter hinzufügen</button>
+            </form>
+        </div>
+
+        <div id="editForm" style="display: none;">
+            <h2>Futter bearbeiten <button class="close-btn-form" onclick="closeEditForm()">X</button></h2>
+            <form method="post" action="{{ url_for('edit_feedstock') }}">
+                <input type="hidden" id="editId" name="editId">
+                <label for="editCategory">Kategorie:</label>
+                <input type="text" id="editCategory" name="editCategory" required>
+                <label for="editQuantity">Menge:</label>
+                <input type="number" id="editQuantity" name="editQuantity" required>
+                <label for="editUnit">Einheit:</label>
+                <input type="text" id="editUnit" name="editUnit" required>
+                <button type="submit">Futter aktualisieren</button>
+            </form>
+        </div>
+
+        <div id="feedstockList" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kategorie</th>
+                        <th>Menge</th>
+                        <th>Einheit</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="list">
+                    {% for item in feedstock %}
+                        <tr>
+                            <td>{{ item.category }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.unit }}</td>
+                            <td>
+                                <button onclick="deleteFeedstock('{{ item.id }}')">Löschen</button>
+                                <button onclick="showEditForm('{{ item.id }}', '{{ item.category }}', '{{ item.quantity }}', '{{ item.unit }}')">Edit</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Landwirtschafts-Informationssystem</p>
+    </footer>
+
+    <script>
+        function searchFeedstock() {
+            const searchQuery = document.getElementById('search').value;
+
+            if (searchQuery.trim() === '') {
+                return false;
+            }
+
+            fetch(`/search_feedstock?search=${encodeURIComponent(searchQuery)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const searchList = document.getElementById('searchList');
+                    searchList.innerHTML = '';
+
+                    if (data.length === 0) {
+                        searchList.innerHTML = '<tr><td colspan="3">Kein Futter dieser Kategorie gefunden.</td></tr>';
+                    } else {
+                        data.forEach(item => {
+                            const row = searchList.insertRow();
+                            const categoryCell = row.insertCell(0);
+                            const quantityCell = row.insertCell(1);
+                            const unitCell = row.insertCell(2);
+
+                            categoryCell.textContent = item.category;
+                            quantityCell.textContent = item.quantity;
+                            unitCell.textContent = item.unit;
+                        });
+                    }
+
+                    document.getElementById('feedstockList').style.display = 'none';
+                    document.getElementById('searchResults').style.display = 'block';
+                })
+                .catch(error => console.error('Fehler beim Suchen des Futters:', error));
+
+            return false;
+        }
+
+        function closeSearchResults() {
+            document.getElementById('searchResults').style.display = 'none';
+        }
+        function showEditForm(id, category, quantity, unit) {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('feedstockList').style.display = 'none';
+
+            const editForm = document.getElementById('editForm');
+            editForm.style.display = 'block';
+
+            document.getElementById('editCategory').value = category;
+            document.getElementById('editQuantity').value = quantity;
+            document.getElementById('editUnit').value = unit;
+            document.getElementById('editId').value = id;
+        }
+
+        function closeEditForm() {
+            document.getElementById('editForm').style.display = 'none';
+            showList(); 
+        }
+
+        function closeForm(formId) {
+            document.getElementById(formId).style.display = 'none';
+        }
+
+        function deleteFeedstock(id) {
+            fetch(`/delete_feedstock?id=${id}`, {
+                method: 'GET',
+            })
+            .then(response => {
+                if (response.ok) {
+                    const tableBody = document.getElementById('list');
+                    const rows = tableBody.getElementsByTagName('tr');
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const cells = rows[i].getElementsByTagName('td');
+                        if (cells[0].textContent === id) {
+                            tableBody.deleteRow(i);
+                            break;
+                        }
+                    }
+
+                    location.reload();
+                } else {
+                    console.error('Fehler beim Löschen des Futters:', response.statusText);
+                }
+            })
+            .catch(error => console.error('Fehler beim Löschen des Futters:', error));
+        }
+
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('feedstockList').style.display = 'none';
+            document.getElementById('updateForm').style.display = 'none';
+        }
+
+        function showList() {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('feedstockList').style.display = 'block';
+            document.getElementById('updateForm').style.display = 'none';
+
+            fetch('/getfeedstock')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('list');
+                    tableBody.innerHTML = '';
+
+                    data.forEach(item => {
+                        const row = tableBody.insertRow();
+                        const categoryCell = row.insertCell(0);
+                        const quantityCell = row.insertCell(1);
+                        const unitCell = row.insertCell(2);
+                        const actionsCell = row.insertCell(3);
+
+                        categoryCell.textContent = item.category;
+                        quantityCell.textContent = item.quantity;
+                        unitCell.textContent = item.unit;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Löschen';
+                        deleteButton.onclick = function () {
+                            deleteFeedstock(item.id);
+                        };
+
+                        actionsCell.appendChild(deleteButton);
+                    });
+                })
+                .catch(error => console.error('Fehler beim Abrufen des Futters:', error));
+        }
+    </script>
+</body>
+</html>

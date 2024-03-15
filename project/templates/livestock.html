@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Tierbestand</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('livestock') }}">Tierbestand</a>
+        <a href="{{ url_for('feedstock') }}">Futterbestand</a>
+        <a href="{{ url_for('vehicles') }}">Fahrzeuge</a>
+        <a href="{{ url_for('lands') }}">Flächen</a>
+        <a href="{{ url_for('harvest') }}">Ernteertrag</a>
+    </nav>
+
+    <main>
+        <form id="searchForm" onsubmit="searchLivestock(); return false;">
+            <label for="searchQuery">Suche nach Ohrmarke oder Art:</label>
+            <input type="text" id="searchQuery" name="searchQuery" placeholder="Ohrmarke oder Art">
+            <button type="submit">Suchen</button>
+        </form>
+
+        <div id="searchResults" style="display: none;">
+            <h2>Suchergebnisse <button class="close-btn-form" onclick="closeSearchResults()">X</button></h2>
+            <table id="searchResultsTable">
+                <thead>
+                    <tr>
+                        <th></th> 
+                        <th>Ohrmarke</th>
+                        <th>Art</th>
+                        <th>Geburtstag</th>
+                        <th>Geschlecht</th>
+                    </tr>
+                </thead>
+                <tbody id="searchResultsBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="btn-container">
+            <button onclick="showAddForm()">Tier hinzufügen</button>
+            <button onclick="showList()">Tiere anzeigen</button>
+        </div>
+
+        <div id="addForm" style="display: none;">
+            <h2>Tier hinzufügen <button class="close-btn-form" onclick="closeForm('addForm')">X</button></h2>
+            <form method="post" action="{{ url_for('add_livestock') }}" enctype="multipart/form-data">
+                <label for="ear_tag">Ohrmarke:</label>
+                <input type="text" id="ear_tag" name="ear_tag" required>
+                <label for="species">Art:</label>
+                <input type="text" id="species" name="species" required>
+                <label for="birthday">Geburtstag:</label>
+                <input type="date" id="birthday" name="birthday" required>
+                <label for="gender">Geschlecht:</label>
+                <select id="gender" name="gender" required>
+                    <option value="männlich">Männlich</option>
+                    <option value="weiblich">Weiblich</option>
+                </select>
+                <label for="image">Bild hochladen:</label>
+                <input type="file" id="image" name="image">
+                <button type="submit">Tier hinzufügen</button>
+            </form>
+        </div>
+
+        <div id="editForm" style="display: none;">
+            <h2>Tier bearbeiten <button class="close-btn-form" onclick="closeEditForm()">X</button></h2>
+            <form method="post" action="{{ url_for('edit_livestock') }}" enctype="multipart/form-data">
+                <input type="hidden" id="editId" name="editId">
+                <label for="editEarTag">Ohrmarke:</label>
+                <input type="text" id="editEarTag" name="editEarTag" required>
+                <label for="editSpecies">Art:</label>
+                <input type="text" id="editSpecies" name="editSpecies" required>
+                <label for="editBirthday">Geburtstag:</label>
+                <input type="date" id="editBirthday" name="editBirthday" required>
+                <label for="editGender">Geschlecht:</label>
+                <select id="editGender" name="editGender" required>
+                    <option value="männlich">Männlich</option>
+                    <option value="weiblich">Weiblich</option>
+                </select>
+                <label for="editImage">Bild ändern:</label>
+                <input type="file" id="editImage" name="editImage">
+                <button type="submit">Tier aktualisieren</button>
+            </form>
+        </div>
+        
+
+        <div id="livestockList" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Ohrmarke</th>
+                        <th>Art</th>
+                        <th>Geburtstag</th>
+                        <th>Geschlecht</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="list">
+                    {% for animal in livestock %}
+                        <tr>
+                            <td><img src="{{ url_for('static', filename=animal.image_path) }}" alt="Livestock Image" width="50"></td>
+                            <td>{{ animal.ear_tag }}</td>
+                            <td>{{ animal.species }}</td>
+                            <td>{{ animal.birthday }}</td>
+                            <td>{{ animal.gender }}</td>
+                            <td>
+                                <button onclick="deleteLivestock('{{ animal.id }}')">Löschen</button>
+                                <button onclick="showEditForm('{{ animal.id }}', '{{ animal.ear_tag }}', '{{ animal.species }}', '{{ animal.birthday }}', '{{ animal.gender }}')">Edit</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Landwirtschafts-Informationssystem</p>
+    </footer>
+
+    <script>
+        function searchLivestock() {
+            const searchQuery = document.getElementById('searchQuery').value;
+        
+            if (searchQuery.trim() === '') {
+                return false;
+            }
+        
+            const staticPath = "{{ url_for('static', filename='') }}";
+        
+            fetch(`/search_livestock?search=${encodeURIComponent(searchQuery)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const searchResults = document.getElementById('searchResults');
+                    const searchResultsTable = document.getElementById('searchResultsTable');
+                    const searchResultsBody = document.getElementById('searchResultsBody');
+        
+                    searchResultsBody.innerHTML = '';
+        
+                    if (data.length > 0) {
+                        data.forEach(animal => {
+                            const row = searchResultsBody.insertRow();
+                            const imageCell = row.insertCell(0);
+                            const earTagCell = row.insertCell(1);
+                            const speciesCell = row.insertCell(2);
+                            const birthdayCell = row.insertCell(3);
+                            const genderCell = row.insertCell(4);
+        
+                            earTagCell.textContent = animal.ear_tag;
+                            speciesCell.textContent = animal.species;
+                            birthdayCell.textContent = animal.birthday;
+                            genderCell.textContent = animal.gender;
+        
+                            const image = document.createElement('img');
+                            image.src = staticPath + animal.image_path;
+                            image.alt = 'Livestock Image';
+                            image.width = 50;
+        
+                            imageCell.appendChild(image);
+                        });
+        
+                        searchResults.style.display = 'block';
+                    } else {
+                        searchResultsBody.innerHTML = '<tr><td colspan="4">Keine Tiere gefunden</td></tr>';
+                        searchResults.style.display = 'block';
+                    }
+                })
+                .catch(error => console.error('Fehler bei der Suche nach Tieren:', error));
+        
+            return false;
+        }
+        
+        
+
+        function closeSearchResults() {
+            document.getElementById('searchResults').style.display = 'none';
+        }
+
+        function closeForm(formId) {
+            document.getElementById(formId).style.display = 'none';
+        }
+
+        function showEditForm(id, earTag, species, birthday, gender) {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('livestockList').style.display = 'none';
+
+            const editForm = document.getElementById('editForm');
+            editForm.style.display = 'block';
+
+            document.getElementById('editEarTag').value = earTag;
+            document.getElementById('editSpecies').value = species;
+            document.getElementById('editBirthday').value = birthday;
+            document.getElementById('editGender').value = gender;
+            document.getElementById('editId').value = id;
+        }
+
+        function closeEditForm() {
+            document.getElementById('editForm').style.display = 'none';
+            showList(); 
+        }
+
+        function deleteLivestock(id) {
+            fetch(`/delete_livestock?id=${id}`, {
+                method: 'GET',
+            })
+            .then(response => {
+                if (response.ok) {
+                    const tableBody = document.getElementById('list');
+                    const rows = tableBody.getElementsByTagName('tr');
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const cells = rows[i].getElementsByTagName('td');
+                        if (cells[0].textContent === id) {
+                            tableBody.deleteRow(i);
+                            break;
+                        }
+                    }
+
+                    location.reload();
+                } else {
+                    console.error('Fehler beim Löschen des Tiers:', response.statusText);
+                }
+            })
+            .catch(error => console.error('Fehler beim Löschen des Tiers:', error));
+        }
+
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('livestockList').style.display = 'none';
+            document.getElementById('updateForm').style.display = 'none';
+        }
+
+        function showList() {
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('livestockList').style.display = 'block';
+            document.getElementById('updateForm').style.display = 'none';
+
+            fetch('/getlivestock')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('list');
+                    tableBody.innerHTML = '';
+
+                    data.forEach(animal => {
+                        const row = tableBody.insertRow();
+                        const earTagCell = row.insertCell(0);
+                        const speciesCell = row.insertCell(1);
+                        const birthdayCell = row.insertCell(2);
+                        const genderCell = row.insertCell(3);
+                        const actionsCell = row.insertCell(4);
+
+                        earTagCell.textContent = animal.ear_tag;
+                        speciesCell.textContent = animal.species;
+                        birthdayCell.textContent = animal.birthday;
+                        genderCell.textContent = animal.gender;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Löschen';
+                        deleteButton.onclick = function () {
+                            deleteLivestock(animal.id);
+                        };
+
+                        actionsCell.appendChild(deleteButton);
+                    });
+                })
+                .catch(error => console.error('Fehler beim Abrufen der Tiere:', error));
+        }
+    </script>
+</body>
+</html>
