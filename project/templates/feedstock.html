@@ -2,6 +2,35 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        button {
+            padding: 0.5em 1em;
+            border: none;
+            border-radius: 5px;
+            background-color: #3b5534;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #15400e;
+        }
+        
+        .close-btn-form {
+            background-color: #ccc;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            padding: 0.3em 0.5em;
+            cursor: pointer;
+        }
+        
+        .close-btn-form:hover {
+            background-color: #999;
+            color: #fff;
+        }           
+    </style>
 </head>
 <body>
     <header>
@@ -49,7 +78,10 @@
                 <label for="quantity">Menge:</label>
                 <input type="number" id="quantity" name="quantity" required>
                 <label for="unit">Einheit:</label>
-                <input type="text" id="unit" name="unit" required>
+                <select id="unit" name="unit" required>
+                    <option value="kg">kg</option>
+                    <option value="t">t</option>
+                </select>
                 <button type="submit">Futter hinzufügen</button>
             </form>
         </div>
@@ -63,7 +95,10 @@
                 <label for="editQuantity">Menge:</label>
                 <input type="number" id="editQuantity" name="editQuantity" required>
                 <label for="editUnit">Einheit:</label>
-                <input type="text" id="editUnit" name="editUnit" required>
+                <select id="editUnit" name="editUnit" required>
+                    <option value="kg">kg</option>
+                    <option value="t">t</option>
+                </select>
                 <button type="submit">Futter aktualisieren</button>
             </form>
         </div>
