@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
-  farming_proj_2024:
+  information_system24:
     build: .
     ports:
       - "5000:5000"

@@ -51,9 +51,10 @@ class Land(db.Model):
     type = db.Column(db.String(50), nullable=False)
     size = db.Column(db.Float, nullable=False)
     ownership = db.Column(db.String(50), nullable=False)
+    unit = db.Column(db.String(50))  
 
     person_id = db.Column(db.Integer, db.ForeignKey('person.id', ondelete='CASCADE'), nullable=True)
-    
+
     def __repr__(self):
         return f'<Land {self.size} {self.type}>'
 
