@@ -106,6 +106,7 @@ button:hover {
 
 .weather-info {
     margin-top: 20px;
+    position: relative;
 }
 
 .forecast-container {
@@ -134,3 +135,4 @@ button:hover {
     max-width: 100%;
     height: auto;
 }
+

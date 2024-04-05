@@ -24,6 +24,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@postgres-db:5432/farming_db'
 db.init_app(app)
 
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     return render_template('index.html')

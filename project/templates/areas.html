@@ -2,6 +2,49 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .search-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        #searchOwnership {
+            margin-right: 10px;
+            padding: 0.5em;
+            border-radius: 5px;
+        }    
+        
+        
+        button {
+            padding: 0.5em 1em;
+            border: none;
+            border-radius: 5px;
+            background-color: #3b5534;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        button:hover {
+            background-color: #15400e;
+        }
+
+        .close-btn-form {
+            background-color: #ccc;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            padding: 0.3em 0.5em;
+            cursor: pointer;
+        }
+
+        .close-btn-form:hover {
+            background-color: #999;
+            color: #fff;
+        }   
+
+    </style>
 </head>
 <body>
     <header>
@@ -17,6 +60,25 @@
     </nav>
 
     <main>
+        <div class="search-container">
+            <label for="searchOwnership">Suche nach:</label>
+            <select id="searchOwnership" name="searchOwnership">
+                <option value="eigenbesitz">Eigenbesitz</option>
+                <option value="gepachtet">Gepachtet</option>
+            </select>
+            <button onclick="searchLands()">Suchen</button>
+        </div>
+    
+        <div id="searchResult" style="display: none;">
+            <h2>Suchergebnisse <button class="close-btn-form" onclick="closeSearchResult()">X</button></h2>
+            <table>
+                <thead>
+                </thead>
+                <tbody id="searchList">
+                </tbody>
+            </table>
+        </div>        
+    
         <div class="btn-container">
             <button onclick="showAddForm()">Fläche hinzufügen</button>
             <button onclick="showList()">Flächen anzeigen</button>
@@ -29,6 +91,13 @@
                 <input type="text" id="type" name="type" required>
                 <label for="size">Größe:</label>
                 <input type="text" id="size" name="size" required>
+                <label for="unit">Einheit:</label>
+                <select id="unit" name="unit">
+                    <option value="m²">m²</option>
+                    <option value="a">a</option>
+                    <option value="ha">ha</option>
+                    <option value="km²">km²</option>
+                </select>
                 <label for="ownership">Besitz:</label>
                 <select id="ownership" name="ownership" onchange="toggleOwnershipFields()">
                     <option value="eigenbesitz">Eigenbesitz</option>
@@ -64,6 +133,13 @@
                 <input type="text" id="editType" name="editType" required>
                 <label for="editSize">Größe:</label>
                 <input type="text" id="editSize" name="editSize" required>
+                <label for="editUnit">Einheit:</label>
+                <select id="editUnit" name="editUnit">
+                    <option value="m²">m²</option>
+                    <option value="a">a</option>
+                    <option value="ha">ha</option>
+                    <option value="km²">km²</option>
+                </select>
                 <label for="editOwnership">Besitz:</label>
                 <select id="editOwnership" name="editOwnership" onchange="toggleEditOwnershipFields()">
                     <option value="eigenbesitz">Eigenbesitz</option>
@@ -98,6 +174,7 @@
                         <th>Typ</th>
                         <th>Größe</th>
                         <th>Besitz</th>
+                        <th>Einheit</th> 
                         <th>Aktionen</th>
                     </tr>
                 </thead>
@@ -107,9 +184,10 @@
                             <td>{{ land.type }}</td>
                             <td>{{ land.size }}</td>
                             <td>{{ land.ownership }}</td>
+                            <td>{{ land.unit }}</td> 
                             <td>
                                 <button onclick="deleteLand('{{ land.id }}')">Löschen</button>
-                                <button onclick="showEditForm('{{ land.id }}', '{{ land.type }}', '{{ land.size }}', '{{ land.ownership }}')">Edit</button>
+                                <button onclick="showEditForm('{{ land.id }}', '{{ land.type }}', '{{ land.size }}', '{{ land.ownership }}', '{{ land.unit }}')">Edit</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -123,20 +201,118 @@
     </footer>
 
     <script>
+        function searchLands() {
+            const searchOwnership = document.getElementById('searchOwnership').value;
+        
+            fetch(`/search_lands?ownership=${searchOwnership}`)
+                .then(response => response.json())
+                .then(data => {
+                    const searchResultDiv = document.getElementById('searchResult');
+                    const searchListBody = document.getElementById('searchList');
+        
+                    searchListBody.innerHTML = '';
+                    searchResultDiv.style.display = 'block';
+        
+                    const tableHeader = document.createElement('thead');
+                    const tableBody = document.createElement('tbody');
+        
+                    if (searchOwnership === 'eigenbesitz') {
+                        tableHeader.innerHTML = '<tr><th>Typ</th><th>Größe</th><th>Besitz</th><th>Einheit</th></tr>';
+        
+                        data.forEach(land => {
+                            const row = tableBody.insertRow();
+                            const typeCell = row.insertCell(0);
+                            const sizeCell = row.insertCell(1);
+                            const ownershipCell = row.insertCell(2);
+                            const unitCell = row.insertCell(3);
+        
+                            typeCell.textContent = land.type;
+                            sizeCell.textContent = land.size;
+                            ownershipCell.textContent = land.ownership;
+                            unitCell.textContent = land.unit;
+                        });
+                    } else if (searchOwnership === 'gepachtet') {
+                        tableHeader.innerHTML = '<tr><th>Typ</th><th>Größe</th><th>Besitz</th><th>Einheit</th><th>Vorname</th><th>Nachname</th><th>Telefonnummer</th><th>Straße</th><th>Stadt</th><th>Bundesland</th><th>PLZ</th></tr>';
+        
+                        data.forEach(land => {
+                            const row = tableBody.insertRow();
+                            const typeCell = row.insertCell(0);
+                            const sizeCell = row.insertCell(1);
+                            const ownershipCell = row.insertCell(2);
+                            const unitCell = row.insertCell(3);
+                            const firstNameCell = row.insertCell(4);
+                            const lastNameCell = row.insertCell(5);
+                            const phoneNumberCell = row.insertCell(6);
+                            const streetCell = row.insertCell(7);
+                            const cityCell = row.insertCell(8);
+                            const stateCell = row.insertCell(9);
+                            const zipCodeCell = row.insertCell(10);
+        
+                            typeCell.textContent = land.type;
+                            sizeCell.textContent = land.size;
+                            ownershipCell.textContent = land.ownership;
+                            unitCell.textContent = land.unit;
+        
+                            if (land.person) {
+                                firstNameCell.textContent = land.person.first_name;
+                                lastNameCell.textContent = land.person.last_name;
+                                phoneNumberCell.textContent = land.person.phone_number;
+        
+                                if (land.person.address) {
+                                    streetCell.textContent = land.person.address.street;
+                                    cityCell.textContent = land.person.address.city;
+                                    stateCell.textContent = land.person.address.state;
+                                    zipCodeCell.textContent = land.person.address.zip_code;
+                                }
+                            }
+                        });
+                    }
+        
+                    searchListBody.appendChild(tableHeader);
+                    searchListBody.appendChild(tableBody);
+                })
+                .catch(error => console.error('Fehler beim Suchen der Flächen:', error));
+        }
+
+        function closeSearchResult() {
+            document.getElementById('searchResult').style.display = 'none';
+        }
+
         function showEditForm(id, type, size, ownership) {
             document.getElementById('addForm').style.display = 'none';
             document.getElementById('landList').style.display = 'none';
-
+        
             const editForm = document.getElementById('editForm');
             editForm.style.display = 'block';
-
+        
             document.getElementById('editType').value = type;
             document.getElementById('editSize').value = size;
             document.getElementById('editOwnership').value = ownership;
             document.getElementById('editId').value = id;
-
+        
+            fetch(`/get_land_details?id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('editType').value = data.type;
+                    document.getElementById('editSize').value = data.size;
+                    document.getElementById('editOwnership').value = data.ownership;
+        
+                    if (data.ownership === 'gepachtet') {
+                        document.getElementById('editFirstName').value = data.person.first_name;
+                        document.getElementById('editLastName').value = data.person.last_name;
+                        document.getElementById('editPhoneNumber').value = data.person.phone_number;
+        
+                        document.getElementById('editAddressStreet').value = data.person.address.street;
+                        document.getElementById('editAddressCity').value = data.person.address.city;
+                        document.getElementById('editAddressState').value = data.person.address.state;
+                        document.getElementById('editAddressZipCode').value = data.person.address.zip_code;
+                    }
+                })
+                .catch(error => console.error('Error fetching land details:', error));
+        
             toggleEditOwnershipFields();
         }
+        
 
         function deleteLand(id) {
             fetch(`/delete_land?id=${id}`, {

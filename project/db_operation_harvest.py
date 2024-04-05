@@ -17,8 +17,6 @@ def get_all_harvests_from_database():
 
     return harvest_list
 
-
-
 def delete_harvest_from_database(harvest_id):
     harvest = Harvest.query.get(harvest_id)
 

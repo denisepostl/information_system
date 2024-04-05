@@ -44,6 +44,36 @@
         .close-btn-chart:hover {
             background-color: rgba(255, 255, 255, 0.2);
         }
+        
+        button {
+            padding: 0.5em 1em;
+            border: none;
+            border-radius: 5px;
+            background-color: #3b5534;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        button:hover {
+            background-color: #15400e;
+        }
+
+        .close-btn-form {
+            background-color: #ccc;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            padding: 0.3em 0.5em;
+            cursor: pointer;
+        }
+
+        .close-btn-form:hover {
+            background-color: #999;
+            color: #fff;
+        }   
+
+            
     </style>
 </head>
 <body>
@@ -63,7 +93,18 @@
         <div class="btn-container">
             <button onclick="showAddForm()">Ernte hinzufügen</button>
             <button onclick="showList()">Ernte anzeigen</button>
+            <button onclick="showHarvestChart()">Ernteertrag Chart anzeigen</button>
         </div>
+
+        <div id="overlay" onclick="closeHarvestChart()"></div>
+
+        <div id="harvestChart">
+            <div id="chartImage">
+                <img id="chartImageSrc" src="" alt="Ernteertrag Chart">
+                <button class="close-btn-chart" onclick="closeHarvestChart()">X</button>
+            </div>
+        </div>
+
 
         <div id="addForm" style="display: none;">
             <h2>Ernte hinzufügen <button class="close-btn-form" onclick="closeForm('addForm')">X</button></h2>
@@ -76,7 +117,7 @@
                 <select id="unit" name="unit" required>
                     <option value="kg">kg</option>
                 </select>
-                <label for="date">Erntedatum:</label>
+                <label for="date">Datum:</label>
                 <input type="date" id="date" name="date" required>
                 <label for="land_id">Fläche:</label>
                 <select id="land_id" name="land_id" required>
@@ -88,21 +129,25 @@
             </form>
         </div>
 
+        
+
+
+
         <div id="editForm" style="display: none;">
             <h2>Ernte bearbeiten <button class="close-btn-form" onclick="closeEditForm()">X</button></h2>
             <form method="post" action="{{ url_for('edit_harvest') }}">
                 <input type="hidden" id="editId" name="editId">
-                <label for="editCrop">Crop:</label>
+                <label for="editCrop">Ernte:</label>
                 <input type="text" id="editCrop" name="editCrop" required>
-                <label for="editQuantity">Quantity:</label>
+                <label for="editQuantity">Menge:</label>
                 <input type="number" id="editQuantity" name="editQuantity" required>
-                <label for="editUnit">Unit:</label>
+                <label for="editUnit">Einheit:</label>
                 <select id="editUnit" name="editUnit" required>
                     <option value="kg">kg</option>
                 </select>
-                <label for="editDate">Date:</label>
+                <label for="editDate">Datum:</label>
                 <input type="date" id="editDate" name="editDate" required>
-                <label for="editLandId">Land:</label>
+                <label for="editLandId">Fläche:</label>
                 <select id="editLandId" name="editLandId" required>
                     {% for land in lands %}
                         <option value="{{ land.id }}">{{ land.type }}</option>
@@ -117,11 +162,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Crop</th>
-                        <th>Quantity</th>
-                        <th>Unit</th>
-                        <th>Date</th>
-                        <th>Land</th>
+                        <th>Ernte</th>
+                        <th>Menge</th>
+                        <th>Einheit</th>
+                        <th>Datum</th>
+                        <th>Fläche</th>
                         <th>Aktionen</th>
                     </tr>
                 </thead>
