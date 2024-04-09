@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Landwirtschafts-Informationssystem</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index_style.css') }}">
+    <style>
+        .close-button-form {
+            background-color: #ccc;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            padding: 0.3em 0.5em;
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            margin-left: 780px;
+        }
+    </style>
 </head>
 <body>
 
@@ -21,12 +34,65 @@
     </nav>
 
     <main>
-        <img src="{{ url_for('static', filename='img/background.png') }}" alt="Example Image">
+        <div class="container">
+            <h1>Wettervorhersage</h1>
+            <form method="post" action="/">
+                <div class="search-bar">
+                    <div class="input-group">
+                        <input type="text" id="city" name="city" placeholder="Stadt" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="country" name="country" placeholder="Land" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="postal_code" name="postal_code" placeholder="Postleitzahl" required>
+                    </div>
+                </div>
+                <div class="button-container">
+                    <button type="submit">Wetter abrufen</button>
+                </div>
+            </form>
+    
+            {% if weather_data %}
+            <div class="weather-info">
+                <h2>{{ weather_data.city_name }}, {{ weather_data.country_code }}</h2>
+                <div class="forecast-container">
+                    {% for day in weather_data.data[:4] %}
+                        <div class="forecast-card">
+                            {% if "Klarer Himmel" in day.weather.description %}
+                            <img class="weather-image" src="../static/img/sonne.png" alt="Sonne">
+                            {% elif "Bewölkt" in day.weather.description %}
+                                <img class="weather-image" src="../static/img/wolke.png" alt="Wolke">
+                            {% elif "Gewitter" in day.weather.description %}
+                                <img class="weather-image" src="../static/img/gewitter.png" alt="Gewitter">
+                            {% elif "Regen" or "Schauerregen" in day.weather.description %}
+                                <img class="weather-image" src="../static/img/regen.png" alt="Regen">
+                            {% elif "Schnee" in day.weather.description %}
+                                <img class="weather-image" src="../static/img/schnee.png" alt="Wolke">
+                            {% endif %}
+                        
+                            <h3>{{ day.valid_date }}</h3>
+                            <p>Max Temperatur: {{ day.max_temp }} °C</p>
+                            <p>Min Temperatur: {{ day.min_temp }} °C</p>
+                            <p>Wetter: {{ day.weather.description }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                <span class="close-button-form" onclick="closeWeatherForm()">X</span>
+            </div>
+            {% endif %}
+        </div>
     </main>
 
     <footer>
         <p>&copy; 2024 Landwirtschafts-Informationssystem</p>
     </footer>
+
+    <script>
+        function closeWeatherForm() {
+            document.querySelector('.weather-info').style.display = 'none';
+        }
+    </script>
 
 </body>
 </html>

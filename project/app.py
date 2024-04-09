@@ -24,9 +24,34 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@postgres-db:5432/farming_db'
 db.init_app(app)
 
+#API-KEY
+WEATHERBIT_API_KEY = "549a083fd4b143afa7be7cb4003a41ac"
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    if request.method == 'POST':
+        city = request.form['city']
+        country = request.form['country']
+        postal_code = request.form['postal_code']
+        lang = 'de'
+
+        url = f'https://api.weatherbit.io/v2.0/forecast/daily'
+        params = {
+            'city': city,
+            'country': country,
+            'postal_code': postal_code,  
+            'lang': lang,
+            'key': WEATHERBIT_API_KEY
+        }
+
+        response = requests.get(url, params=params)
+
+        if response.status_code == 200:
+            weather_data = response.json()
+            return render_template('index.html', weather_data=weather_data)
+        else:
+            return jsonify({'error': 'Fehler beim Abrufen der Wetterdaten'}), 500
+
     return render_template('index.html')
 
 #Vehicle
