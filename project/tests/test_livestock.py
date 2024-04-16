@@ -6,6 +6,12 @@ from datetime import date
 
 @pytest.fixture
 def app():
+    """
+    Create a Flask application instance for testing.
+
+    Returns:
+    - Flask: The Flask application instance.
+    """
     from flask import Flask
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
@@ -17,9 +23,24 @@ def app():
 
 @pytest.fixture
 def client(app):
+    """
+    Create a test client for the Flask application.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+
+    Returns:
+    - FlaskClient: The test client for the Flask application.
+    """
     return app.test_client()
 
 def test_add_livestock_to_database(app):
+    """
+    Test adding a livestock entry to the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_livestock_to_database('Tag123', 'Cow', date(2020, 1, 1), 'Female', None)
         animal = Livestock.query.first()
@@ -30,6 +51,12 @@ def test_add_livestock_to_database(app):
         assert animal.image_path is None
 
 def test_get_all_livestock_from_database(app):
+    """
+    Test retrieving all livestock entries from the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_livestock_to_database('Tag1', 'Cow', date(2020, 1, 1), 'Female', None)
         add_livestock_to_database('Tag2', 'Sheep', date(2019, 1, 1), 'Male', None)
@@ -42,6 +69,12 @@ def test_get_all_livestock_from_database(app):
         assert livestock[2]['ear_tag'] == 'Tag3'
 
 def test_delete_livestock_from_database(app):
+    """
+    Test deleting a livestock entry from the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_livestock_to_database('Tag123', 'Cow', date(2020, 1, 1), 'Female', None)
         animal = Livestock.query.first()
@@ -49,6 +82,12 @@ def test_delete_livestock_from_database(app):
         assert delete_livestock_from_database(999) == False
 
 def test_update_livestock_in_database(app):
+    """
+    Test updating a livestock entry in the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_livestock_to_database('Tag123', 'Cow', date(2020, 1, 1), 'Female', None)
         animal = Livestock.query.first()
@@ -60,6 +99,12 @@ def test_update_livestock_in_database(app):
         assert animal.image_path is None
 
 def test_search_livestock_in_database(app):
+    """
+    Test searching for livestock entries in the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_livestock_to_database('Tag1', 'Cow', date(2020, 1, 1), 'Female', None)
         add_livestock_to_database('Tag2', 'Sheep', date(2019, 1, 1), 'Male', None)

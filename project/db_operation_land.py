@@ -2,6 +2,27 @@ from models import Person, Address, Land, db
 from sqlalchemy.exc import IntegrityError
 
 def add_land_to_database(type, size, ownership, unit, form_data):
+    """
+    Add a land entry to the database.
+
+    Parameters:
+    - type (str): The type of land.
+    - size (float): The size of the land.
+    - ownership (str): The ownership status of the land.
+    - unit (str): The unit of measurement for the land size.
+    - form_data (dict): A dictionary containing form data related to the land.
+        It may include:
+            - 'firstName' (str): The first name of the landowner (if ownership is 'gepachtet').
+            - 'lastName' (str): The last name of the landowner (if ownership is 'gepachtet').
+            - 'phoneNumber' (str): The phone number of the landowner (if ownership is 'gepachtet').
+            - 'addressStreet' (str): The street address of the landowner (if ownership is 'gepachtet').
+            - 'addressCity' (str): The city of the landowner (if ownership is 'gepachtet').
+            - 'addressState' (str): The state of the landowner (if ownership is 'gepachtet').
+            - 'addressZipCode' (str): The zip code of the landowner (if ownership is 'gepachtet').
+
+    Returns:
+    - None
+    """
     if ownership == 'gepachtet':
         person = Person(first_name=form_data['firstName'], last_name=form_data['lastName'], phone_number=form_data['phoneNumber'])
         db.session.add(person)
@@ -19,6 +40,15 @@ def add_land_to_database(type, size, ownership, unit, form_data):
     db.session.commit()
 
 def delete_land_from_database(land_id):
+    """
+    Delete a land entry from the database.
+
+    Parameters:
+    - land_id (int): The ID of the land entry to be deleted.
+
+    Returns:
+    - None
+    """
     land = Land.query.get(land_id)
 
     if land:
@@ -39,6 +69,15 @@ def delete_land_from_database(land_id):
         db.session.commit()
 
 def get_land_details_from_database(land_id):
+    """
+    Retrieve details of a land entry from the database.
+
+    Parameters:
+    - land_id (int): The ID of the land entry to retrieve details for.
+
+    Returns:
+    - dict or None: A dictionary containing details of the land entry if found, None otherwise.
+    """
     land = Land.query.get(land_id)
 
     if land:
@@ -65,6 +104,16 @@ def get_land_details_from_database(land_id):
         return None
 
 def edit_land_in_database(land_id, form_data):
+    """
+    Edit a land entry in the database.
+
+    Parameters:
+    - land_id (int): The ID of the land entry to be edited.
+    - form_data (dict): A dictionary containing form data for editing the land entry.
+
+    Returns:
+    - Land or None: The edited land entry if successful, None otherwise.
+    """
     land = Land.query.get(land_id)
 
     if land:
@@ -132,6 +181,15 @@ def edit_land_in_database(land_id, form_data):
         return None
 
 def search_lands_in_database(ownership):
+    """
+    Search for land entries in the database based on ownership status.
+
+    Parameters:
+    - ownership (str): The ownership status to search for ('eigenbesitz' or 'gepachtet').
+
+    Returns:
+    - list: A list of dictionaries containing details of the land entries found.
+    """
     lands = Land.query.filter_by(ownership=ownership).all()
 
     lands_data = []

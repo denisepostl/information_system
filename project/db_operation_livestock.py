@@ -5,9 +5,31 @@ from sqlalchemy import or_
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
+    """
+    Check if the filename has an allowed extension.
+
+    Parameters:
+    - filename (str): The name of the file to check.
+
+    Returns:
+    - bool: True if the filename has an allowed extension, False otherwise.
+    """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
     
 def add_livestock_to_database(ear_tag, species, birthday, gender, image_file):
+    """
+    Add a livestock entry to the database.
+
+    Parameters:
+    - ear_tag (str): The ear tag of the livestock.
+    - species (str): The species of the livestock.
+    - birthday (datetime): The birthday of the livestock.
+    - gender (str): The gender of the livestock.
+    - image_file (FileStorage): The image file of the livestock.
+
+    Returns:
+    - None
+    """
     filename = None
 
     if image_file and allowed_file(image_file.filename):
@@ -20,6 +42,15 @@ def add_livestock_to_database(ear_tag, species, birthday, gender, image_file):
     db.session.commit()
 
 def search_livestock_in_database(search_query):
+    """
+    Search for livestock entries in the database based on a search query.
+
+    Parameters:
+    - search_query (str): The search query.
+
+    Returns:
+    - list: A list of dictionaries containing details of the livestock entries found.
+    """
     if search_query:
         livestock = Livestock.query.filter(or_(Livestock.ear_tag.ilike(f'%{search_query}%'),
                                                Livestock.species.ilike(f'%{search_query}%'))).all()
@@ -38,6 +69,12 @@ def search_livestock_in_database(search_query):
     return livestock_list
 
 def get_all_livestock_from_database():
+    """
+    Retrieve all livestock entries from the database.
+
+    Returns:
+    - list: A list of dictionaries containing details of all livestock entries.
+    """
     livestock = Livestock.query.all()
     livestock_list = [{
         'ear_tag': animal.ear_tag,
@@ -49,6 +86,15 @@ def get_all_livestock_from_database():
     return livestock_list
 
 def delete_livestock_from_database(livestock_id):
+    """
+    Delete a livestock entry from the database.
+
+    Parameters:
+    - livestock_id (int): The ID of the livestock entry to be deleted.
+
+    Returns:
+    - bool: True if the deletion is successful, False otherwise.
+    """
     animal = Livestock.query.get(livestock_id)
 
     if animal:
@@ -59,6 +105,20 @@ def delete_livestock_from_database(livestock_id):
         return False
     
 def update_livestock_in_database(livestock_id, ear_tag, species, birthday, gender, new_image):
+    """
+    Update a livestock entry in the database.
+
+    Parameters:
+    - livestock_id (int): The ID of the livestock entry to be updated.
+    - ear_tag (str): The updated ear tag of the livestock.
+    - species (str): The updated species of the livestock.
+    - birthday (datetime): The updated birthday of the livestock.
+    - gender (str): The updated gender of the livestock.
+    - new_image (FileStorage): The new image file of the livestock (optional).
+
+    Returns:
+    - None
+    """
     animal = Livestock.query.get(livestock_id)
 
     if animal:

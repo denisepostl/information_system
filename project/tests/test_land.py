@@ -6,6 +6,12 @@ from project.db_operation_land import add_land_to_database, delete_land_from_dat
 
 @pytest.fixture
 def app():
+    """
+    Create a Flask application instance for testing.
+
+    Returns:
+    - Flask: The Flask application instance.
+    """
     app = Flask(__name__)
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
@@ -21,9 +27,25 @@ def app():
 
 @pytest.fixture
 def client(app):
+    """
+    Create a test client for the Flask application.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+
+    Returns:
+    - FlaskClient: The test client for the Flask application.
+    """
     return app.test_client()
 
 def test_add_land_to_database(app, client):
+    """
+    Test adding a land entry to the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    - client (FlaskClient): The test client for the Flask application.
+    """
     with app.app_context():
         form_data = {
             'firstName': 'John',
@@ -56,6 +78,13 @@ def test_add_land_to_database(app, client):
         assert address.zip_code == '12345'
 
 def test_delete_land_from_database(app, client):
+    """
+    Test deleting a land entry from the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    - client (FlaskClient): The test client for the Flask application.
+    """
     with app.app_context():
         land = Land(type='Type', size=100, ownership='gepachtet', unit='unit')
         db.session.add(land)
@@ -67,6 +96,13 @@ def test_delete_land_from_database(app, client):
         assert Land.query.get(land_id) is None
 
 def test_get_land_details_from_database(app, client):
+    """
+    Test retrieving details of a land entry from the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    - client (FlaskClient): The test client for the Flask application.
+    """
     with app.app_context():
         land = Land(type='Type', size=100, ownership='gepachtet', unit='unit')
         db.session.add(land)
@@ -81,6 +117,13 @@ def test_get_land_details_from_database(app, client):
         assert details['ownership'] == 'gepachtet'
 
 def test_edit_land_in_database(app, client):
+    """
+    Test updating a land entry in the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    - client (FlaskClient): The test client for the Flask application.
+    """
     with app.app_context():
         land = Land(type='Type', size=100, ownership='gepachtet', unit='unit')
         db.session.add(land)
@@ -110,6 +153,13 @@ def test_edit_land_in_database(app, client):
         assert edited_land.unit == 'newUnit'
 
 def test_search_lands_in_database(app, client):
+    """
+    Test searching for land entries in the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    - client (FlaskClient): The test client for the Flask application.
+    """
     with app.app_context():
         land1 = Land(type='Type1', size=100, ownership='gepachtet', unit='unit1')
         land2 = Land(type='Type2', size=200, ownership='gepachtet', unit='unit2')

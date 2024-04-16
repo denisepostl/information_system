@@ -6,6 +6,12 @@ from datetime import date
 
 @pytest.fixture
 def app():
+    """
+    Create a Flask application instance for testing.
+
+    Returns:
+    - Flask: The Flask application instance.
+    """
     from flask import Flask
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
@@ -17,9 +23,24 @@ def app():
 
 @pytest.fixture
 def client(app):
+    """
+    Create a test client for the Flask application.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+
+    Returns:
+    - FlaskClient: The test client for the Flask application.
+    """
     return app.test_client()
 
 def test_add_harvest_to_database(app):
+    """
+    Test adding a harvest entry to the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         land = Land(type='Farm', size=10.0, ownership='Private')
         db.session.add(land)
@@ -34,6 +55,12 @@ def test_add_harvest_to_database(app):
         assert harvest.land.type == 'Farm'
 
 def test_get_all_harvests_from_database(app):
+    """
+    Test retrieving all harvest entries from the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         land1 = Land(type='Farm', size=10.0, ownership='Private')
         land2 = Land(type='Garden', size=5.0, ownership='Public')
@@ -49,6 +76,12 @@ def test_get_all_harvests_from_database(app):
         assert harvests[1]['crop'] == 'Carrots'
 
 def test_delete_harvest_from_database(app):
+    """
+    Test deleting a harvest entry from the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         land = Land(type='Farm', size=10.0, ownership='Private')
         db.session.add(land)
@@ -61,6 +94,12 @@ def test_delete_harvest_from_database(app):
         assert delete_harvest_from_database(999) == False
 
 def test_update_harvest_in_database(app):
+    """
+    Test updating a harvest entry in the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         land = Land(type='Farm', size=10.0, ownership='Private')
         db.session.add(land)

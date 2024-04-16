@@ -5,6 +5,12 @@ from project.db_operation_feedstock import search_feedstock_in_database, add_fee
 
 @pytest.fixture
 def app():
+    """
+    Create a Flask application instance for testing.
+
+    Returns:
+    - Flask: The Flask application instance.
+    """
     from flask import Flask
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
@@ -16,9 +22,24 @@ def app():
 
 @pytest.fixture
 def client(app):
+    """
+    Create a test client for the Flask application.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+
+    Returns:
+    - FlaskClient: The test client for the Flask application.
+    """
     return app.test_client()
 
 def test_search_feedstock_in_database(app):
+    """
+    Test the search functionality for feedstock entries in the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_feedstock_to_database('Seeds', 100, 'kg')
         add_feedstock_to_database('Fertilizer', 50, 'lbs')
@@ -32,6 +53,12 @@ def test_search_feedstock_in_database(app):
         assert len(empty_results) == 0
 
 def test_add_feedstock_to_database(app):
+    """
+    Test adding a feedstock entry to the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_feedstock_to_database('Seeds', 100, 'kg')
         feedstock_item = Feedstock.query.first()
@@ -40,6 +67,12 @@ def test_add_feedstock_to_database(app):
         assert feedstock_item.unit == 'kg'
 
 def test_get_all_feedstock_from_database(app):
+    """
+    Test retrieving all feedstock entries from the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_feedstock_to_database('Seeds', 100, 'kg')
         add_feedstock_to_database('Fertilizer', 50, 'lbs')
@@ -52,6 +85,12 @@ def test_get_all_feedstock_from_database(app):
         assert feedstock_items[2]['category'] == 'Water'
 
 def test_delete_feedstock_from_database(app):
+    """
+    Test deleting a feedstock entry from the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_feedstock_to_database('Seeds', 100, 'kg')
         feedstock_item = Feedstock.query.first()
@@ -60,6 +99,12 @@ def test_delete_feedstock_from_database(app):
         assert delete_feedstock_from_database(999) == False
 
 def test_update_feedstock_in_database(app):
+    """
+    Test updating a feedstock entry in the database.
+
+    Parameters:
+    - app (Flask): The Flask application instance.
+    """
     with app.app_context():
         add_feedstock_to_database('Seeds', 100, 'kg')
         feedstock_item = Feedstock.query.first()
